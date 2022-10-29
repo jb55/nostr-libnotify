@@ -17,8 +17,9 @@ def parse_urgency(b):
         return "low"
     elif b == 1:
         return "normal"
-    else:
+    elif b == 2:
         return "critical"
+    return "normal"
 
 def msg_cb(bus, msg):
     args = msg.get_args_list()
