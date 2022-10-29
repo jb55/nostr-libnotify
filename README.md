@@ -1,6 +1,6 @@
 # nostr-libnotify
 
-Monitor libnotify notifications and send them to nostr
+xonsh script to monitor libnotify notifications and send them to nostr
 
 ## Environment variables
 
