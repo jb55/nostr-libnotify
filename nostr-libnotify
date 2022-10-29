@@ -1,0 +1,48 @@
+#!/usr/bin/env xonsh
+
+# dependencies python3Packages.dbus-python python3Packages.pygobject3
+#              jb55/nostril websocat
+
+import dbus
+from gi.repository import GLib as gobject
+from dbus.mainloop.glib import DBusGMainLoop
+import sys
+
+$NOSTR_KEY
+$NOTIFY_PK
+$RELAY_URL
+
+def parse_urgency(b):
+    if b == 0:
+        return "low"
+    elif b == 1:
+        return "normal"
+    else:
+        return "critical"
+
+def msg_cb(bus, msg):
+    args = msg.get_args_list()
+    source = args[0]
+    title = args[3]
+    body = args[4]
+    data = args[6]
+    urgency = parse_urgency(data["urgency"])
+
+    if urgency == "critical":
+        content = "**{}**\n{}".format(title, body).strip()
+        nostril --envelope --sec $NOSTR_KEY --content @(content) -p $NOTIFY_PK | websocat $RELAY_URL
+    else:
+        content = "{}\n{}".format(title, body).strip()
+        nostril --envelope --sec $NOSTR_KEY --content @(content) | websocat $RELAY_URL
+
+if __name__ == '__main__':
+    DBusGMainLoop(set_as_default=True)
+    bus = dbus.SessionBus()
+
+    #string = "interface='org.freedesktop.Notifications',member='Notify'"
+    string = "interface='org.freedesktop.Notifications',member='Notify',eavesdrop='true'"
+    bus.add_match_string(string)
+    bus.add_message_filter(msg_cb)
+
+    mainloop = gobject.MainLoop ()
+    mainloop.run ()
